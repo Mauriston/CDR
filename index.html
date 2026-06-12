@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora Clinical Dementia Rating (CDR)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Transições suaves para a interface */
+        .option-card { transition: all 0.2s ease-in-out; }
+        body { padding-bottom: 140px; } /* Espaço para o rodapé fixo */
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans antialiased selection:bg-[#2a6d54] selection:text-white">
+
+    <!-- Cabeçalho -->
+    <header class="bg-white shadow-sm sticky top-0 z-40">
+        <div class="max-w-3xl mx-auto px-4 py-4 md:py-6">
+            <h1 class="text-xl md:text-2xl font-bold text-gray-800">Clinical Dementia Rating (CDR)</h1>
+            <p class="text-sm text-gray-500 mt-1">Calculadora baseada na versão validada em português</p>
+        </div>
+    </header>
+
+    <!-- Container das Categorias -->
+    <main class="max-w-3xl mx-auto p-4 mt-2" id="categories-container">
+        <!-- O conteúdo será injetado pelo JavaScript -->
+    </main>
+
+    <!-- Rodapé Fixo (Estilo do vídeo) -->
+    <div class="fixed bottom-0 left-0 w-full bg-[#1e4e3b] text-white shadow-[0_-4px_20px_rgba(0,0,0,0.15)] z-50">
+        <div class="max-w-3xl mx-auto flex flex-row items-center justify-between p-4 md:p-6">
+            
+            <!-- Pontuações -->
+            <div class="flex flex-col justify-center">
+                <div class="flex items-baseline gap-1 md:gap-2">
+                    <span id="global-score" class="text-4xl md:text-5xl font-bold tracking-tight">0</span>
+                    <span class="text-sm md:text-lg text-gray-200">pontos</span>
+                    <button onclick="toggleModal()" class="ml-1 text-white hover:text-gray-300 focus:outline-none transition-colors" aria-label="Informações sobre a pontuação">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 md:h-6 md:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="text-xs md:text-sm text-gray-300 mt-1 font-medium">Escore Global CDR</div>
+                <div class="text-xs md:text-sm text-gray-400 mt-0.5">Escore CDR-SB: <span id="sb-score" class="text-white font-semibold">0</span> pontos</div>
+            </div>
+
+            <!-- Estágio -->
+            <div class="border-l-2 border-[#2a6d54] pl-4 md:pl-6 flex flex-col justify-center h-full">
+                <div id="stage-text" class="text-xl md:text-3xl font-bold leading-tight">Normal</div>
+                <div class="text-sm md:text-base text-gray-300">(sem demência)</div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="info-modal" class="fixed inset-0 z-[60] bg-black/50 hidden flex items-center justify-center p-4 backdrop-blur-sm transition-opacity opacity-0 duration-300" onclick="handleModalClick(event)">
+        <div class="bg-white rounded-xl shadow-xl max-w-lg w-full overflow-hidden transform scale-95 transition-transform duration-300" id="modal-content">
+            <div class="flex justify-between items-center p-4 md:p-5 border-b border-gray-100">
+                <h3 class="text-lg md:text-xl font-bold text-gray-800">Interpretação dos Resultados</h3>
+                <button onclick="toggleModal()" class="text-gray-400 hover:text-gray-600 focus:outline-none transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="p-4 md:p-5 overflow-x-auto">
+                <table class="w-full text-left text-sm text-gray-600 border-collapse">
+                    <thead class="bg-gray-50 text-gray-700 text-xs uppercase">
+                        <tr>
+                            <th scope="col" class="px-4 py-3 border-b border-gray-200">Global CDR</th>
+                            <th scope="col" class="px-4 py-3 border-b border-gray-200">CDR-SB</th>
+                            <th scope="col" class="px-4 py-3 border-b border-gray-200">Demência</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-4 py-3 font-medium text-gray-900">0</td>
+                            <td class="px-4 py-3">0</td>
+                            <td class="px-4 py-3">Normal (sem demência)</td>
+                        </tr>
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-4 py-3 font-medium text-gray-900">0.5</td>
+                            <td class="px-4 py-3">0.5-4.0</td>
+                            <td class="px-4 py-3">Questionável a muito leve</td>
+                        </tr>
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-4 py-3 font-medium text-gray-900">1</td>
+                            <td class="px-4 py-3">4.5-9.0</td>
+                            <td class="px-4 py-3">Leve</td>
+                        </tr>
+                        <tr class="bg-red-50 hover:bg-red-100 transition-colors">
+                            <td class="px-4 py-3 font-medium text-gray-900">2</td>
+                            <td class="px-4 py-3 text-gray-700">9.5-15.5</td>
+                            <td class="px-4 py-3 font-medium text-gray-900">MODERADA</td>
+                        </tr>
+                        <tr class="bg-red-100 hover:bg-red-200 transition-colors">
+                            <td class="px-4 py-3 font-bold text-red-800">3</td>
+                            <td class="px-4 py-3 text-gray-800">16.0-18.0</td>
+                            <td class="px-4 py-3 font-bold text-red-800">GRAVE</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="bg-gray-50 p-4 md:px-5 md:py-3 border-t border-gray-100 flex justify-end">
+                <button onclick="toggleModal()" class="px-4 py-2 bg-gray-800 text-white text-sm font-medium rounded-lg hover:bg-gray-700 focus:outline-none transition-colors">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dados Estruturados traduzidos
+        const cdrData = [
+            { id: 'M', nome: 'Memória', sigla: '(M)', opcoes: [
+                { pt: 0, desc: "Sem perda de memória ou perda leve e inconstante." },
+                { pt: 0.5, desc: "Esquecimento constante, recordação parcial de eventos." },
+                { pt: 1, desc: "Perda de memória moderada, mais para eventos recentes, atrapalha as atividades de vida diária." },
+                { pt: 2, desc: "Perda grave de memória, apenas assunto altamente aprendido é recordado." },
+                { pt: 3, desc: "Perda de memória grave. Apenas fragmentos são recordados." }
+            ]},
+            { id: 'O', nome: 'Orientação', sigla: '(O)', opcoes: [
+                { pt: 0, desc: "Completa orientação." },
+                { pt: 0.5, desc: "Completamente orientado com dificuldade leve em relação ao tempo." },
+                { pt: 1, desc: "Dificuldade moderada com relação ao tempo, orientado em áreas familiares." },
+                { pt: 2, desc: "Dificuldade grave com relação ao tempo, desorientado quase sempre no espaço." },
+                { pt: 3, desc: "Apenas orientado em relação a pessoas." }
+            ]},
+            { id: 'JSP', nome: 'Julgamento e solução de problemas', sigla: '(JSP)', opcoes: [
+                { pt: 0, desc: "Resolve problemas diários, como problemas financeiros; julgamento preservado." },
+                { pt: 0.5, desc: "Dificuldade leve para solucionar problemas, similaridades e diferenças." },
+                { pt: 1, desc: "Dificuldade moderada em lidar com problemas, similaridades e diferenças, julgamento social mantido." },
+                { pt: 2, desc: "Dificuldade séria em lidar com problemas, similaridades e diferenças, julgamento social danificado." },
+                { pt: 3, desc: "Incapaz de fazer julgamento ou resolver problemas." }
+            ]},
+            { id: 'RC', nome: 'Relações comunitárias', sigla: '(RC)', opcoes: [
+                { pt: 0, desc: "Função independente no trabalho, compras, grupos sociais." },
+                { pt: 0.5, desc: "Leve dificuldade nestas tarefas." },
+                { pt: 1, desc: "Não é independente nestas atividades, parece normal em uma inspeção casual." },
+                { pt: 2, desc: "Não há independência fora de casa, parece bem o bastante para ser levado fora de casa." },
+                { pt: 3, desc: "Não há independência fora de casa, parece doente o bastante para ser levado fora de casa." }
+            ]},
+            { id: 'LP', nome: 'Lar e passatempos', sigla: '(LP)', opcoes: [
+                { pt: 0, desc: "Vida em casa, passatempos e interesses intelectuais bem mantidos." },
+                { pt: 0.5, desc: "Vida em casa, passatempos, interesses intelectuais levemente prejudicados." },
+                { pt: 1, desc: "Prejuízo suave em tarefas em casa, tarefas mais difíceis, passatempo e interesses abandonados." },
+                { pt: 2, desc: "Apenas tarefas simples são preservadas, interesses muito restritos e pouco mantidos." },
+                { pt: 3, desc: "Sem função significativa em casa." }
+            ]},
+            { id: 'CP', nome: 'Cuidados pessoais', sigla: '(CP)', opcoes: [
+                { pt: 0, desc: "Completamente capaz de cuidar-se." },
+                { pt: 0.5, desc: "Completamente capaz de cuidar-se." },
+                { pt: 1, desc: "Necessita de ajuda." },
+                { pt: 2, desc: "Requer assistência ao vestir-se, para higiene." },
+                { pt: 3, desc: "Muita ajuda para cuidados pessoais, incontinências freqüentes." }
+            ]}
+        ];
+
+        // Estado inicial (0 pontos em tudo)
+        let state = { M: 0, O: 0, JSP: 0, RC: 0, LP: 0, CP: 0 };
+
+        // Função para calcular o Escore Global de acordo com as regras do CDR
+        function calcularGlobalCDR(M, secScores) {
+            const count = (conditionFn) => secScores.filter(conditionFn).length;
+
+            // Regra baseada na Memória = 0
+            if (M === 0) {
+                if (count(s => s >= 0.5) >= 2) return 0.5;
+                return 0;
+            }
+
+            // Regra baseada na Memória = 0.5
+            if (M === 0.5) {
+                if (count(s => s >= 1) >= 3) return 1;
+                return 0.5;
+            }
+
+            // Regras baseadas na Memória >= 1
+            const greater = count(s => s > M);
+            const less = count(s => s < M);
+            const equal = count(s => s === M);
+
+            if (equal >= 3) return M;
+
+            // Quando M >= 1, o Global CDR não pode ser 0; será 0.5 se a maioria (>=3) das secundárias for 0
+            if (count(s => s === 0) >= 3) return 0.5;
+
+            if (greater >= 3 || less >= 3) {
+                // Se exatamente 3 de um lado e 2 do outro
+                if ((greater === 3 && less === 2) || (less === 3 && greater === 2)) return M;
+
+                // Definir de qual lado está a maioria
+                const maioriaArray = greater >= 3 ? secScores.filter(s => s > M) : secScores.filter(s => s < M);
+                
+                // Encontrar o valor de pontuação mais frequente (moda) do lado majoritário
+                let freqs = {};
+                maioriaArray.forEach(s => freqs[s] = (freqs[s] || 0) + 1);
+                let maxFreq = 0;
+                for (let k in freqs) if (freqs[k] > maxFreq) maxFreq = freqs[k];
+                
+                const modas = Object.keys(freqs).filter(k => freqs[k] === maxFreq).map(Number);
+                
+                // Se houver apenas uma moda clara, retorna ela
+                if (modas.length === 1) return modas[0];
+                
+                // Em caso de empate entre as secundárias majoritárias, CDR = pontuação empatada mais próxima de M
+                let closest = modas[0];
+                let minDiff = Math.abs(modas[0] - M);
+                for (let i = 1; i < modas.length; i++) {
+                    const diff = Math.abs(modas[i] - M);
+                    if (diff < minDiff) {
+                        closest = modas[i];
+                        minDiff = diff;
+                    }
+                }
+                return closest;
+            }
+
+            // Quando 1 ou 2 secundárias tem a pontuação de M, e <=2 estão de cada lado de M
+            return M;
+        }
+
+        // Obtém o texto de estágio
+        function getStageText(globalScore) {
+            switch(globalScore) {
+                case 0: return { titulo: "Normal", sub: "sem demência" };
+                case 0.5: return { titulo: "Questionável", sub: "a muito leve" };
+                case 1: return { titulo: "Leve", sub: "demência" };
+                case 2: return { titulo: "Moderada", sub: "demência" };
+                case 3: return { titulo: "Grave", sub: "demência" };
+                default: return { titulo: "", sub: "" };
+            }
+        }
+
+        // Renderiza as categorias HTML
+        function renderCategories() {
+            const container = document.getElementById('categories-container');
+            container.innerHTML = cdrData.map(cat => `
+                <div class="mb-8">
+                    <h2 class="text-base md:text-lg font-semibold text-gray-800 mb-3">${cat.nome} <span class="text-gray-500 font-normal">${cat.sigla}</span></h2>
+                    <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
+                        ${cat.opcoes.map(opt => {
+                            const isSelected = state[cat.id] === opt.pt;
+                            const bgClass = isSelected ? 'bg-[#2a6d54] text-white' : 'bg-white text-gray-700 hover:bg-gray-50';
+                            const ptClass = isSelected ? 'text-white' : 'text-gray-500';
+                            const borderClass = 'border-b border-gray-100 last:border-0';
+                            const ptText = opt.pt === 0 ? '0' : '+' + opt.pt;
+                            
+                            return `
+                                <div onclick="selectOption('${cat.id}', ${opt.pt})" class="option-card flex items-center p-3 md:p-4 cursor-pointer select-none ${bgClass} ${borderClass}">
+                                    <div class="flex-1 pr-4 text-sm md:text-base leading-snug">${opt.desc}</div>
+                                    <div class="font-bold text-sm md:text-base whitespace-nowrap px-2 py-1 rounded bg-black/5 ${ptClass}">
+                                        ${ptText}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `).join('');
+            
+            updateFooter();
+        }
+
+        // Manipula a seleção e re-renderiza
+        function selectOption(catId, points) {
+            state[catId] = points;
+            renderCategories(); // Re-renderiza a interface 
+            //(Para melhor otimização em app real usaria manipulação DOM direta, mas em Vanilla esse reflow é instantâneo)
+        }
+
+        // Atualiza os cálculos e o rodapé
+        function updateFooter() {
+            const mScore = state.M;
+            const secScores = [state.O, state.JSP, state.RC, state.LP, state.CP];
+            
+            // Calculo CDR-SB
+            let sbScore = mScore + secScores.reduce((acc, val) => acc + val, 0);
+            
+            // Calculo Global CDR
+            let globalScore = calcularGlobalCDR(mScore, secScores);
+
+            // Atualização no DOM
+            document.getElementById('global-score').innerText = globalScore;
+            document.getElementById('sb-score').innerText = sbScore;
+            
+            const stage = getStageText(globalScore);
+            document.getElementById('stage-text').innerText = stage.titulo;
+            document.getElementById('stage-text').nextElementSibling.innerText = `(${stage.sub})`;
+        }
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCategories();
+        });
+
+        // Funções do Modal
+        function toggleModal() {
+            const modal = document.getElementById('info-modal');
+            const modalContent = document.getElementById('modal-content');
+            
+            if (modal.classList.contains('hidden')) {
+                // Abrir
+                modal.classList.remove('hidden');
+                // Pequeno delay para garantir que a classe hidden foi removida antes de iniciar a transição
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0');
+                    modalContent.classList.remove('scale-95');
+                    modalContent.classList.add('scale-100');
+                }, 10);
+                document.body.style.overflow = 'hidden'; // Prevenir scroll do body
+            } else {
+                // Fechar
+                modal.classList.add('opacity-0');
+                modalContent.classList.remove('scale-100');
+                modalContent.classList.add('scale-95');
+                
+                // Aguardar a transição terminar para esconder
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    document.body.style.overflow = ''; // Restaurar scroll
+                }, 300);
+            }
+        }
+
+        // Fechar modal ao clicar fora do conteúdo
+        function handleModalClick(event) {
+            if (event.target.id === 'info-modal') {
+                toggleModal();
+            }
+        }
+    </script>
+</body>
+</html>
